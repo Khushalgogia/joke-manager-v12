@@ -368,6 +368,7 @@ with tab_search:
                 st.error(f"Search error: {e}")
 
 # ─── TAB: DB EXPLORER ────────────────────────────────────────────────────────
+# ─── TAB: DB EXPLORER ────────────────────────────────────────────────────────
 with tab_db:
     st.header("📊 Database Explorer")
     
@@ -387,18 +388,61 @@ with tab_db:
 
     st.divider()
     
+    # Search within DB
+    db_search = st.text_input("Filter by text", placeholder="Type to filter...")
+    
     # Table View
     limit = st.select_slider("Rows to load", options=[10, 50, 100, 500], value=50)
     
     try:
-        data = supabase.table("comic_segments").select("*").order("created_at", desc=True).limit(limit).execute()
-        df = pd.DataFrame(data.data)
-        if not df.empty:
-            st.dataframe(
-                df[["id", "searchable_text", "bridge_content", "created_at", "meta_tags"]],
-                use_container_width=True,
-                hide_index=True
-            )
+        query = supabase.table("comic_segments").select("*").order("created_at", desc=True).limit(limit)
+        if db_search:
+            query = query.ilike("searchable_text", f"%{db_search}%")
+            
+        data = query.execute()
+        
+        if not data.data:
+            st.info("No jokes found.")
+        else:
+            for item in data.data:
+                with st.container(border=True):
+                    c1, c2 = st.columns([5, 1])
+                    with c1:
+                        st.markdown(f"**{item['searchable_text']}**")
+                        st.caption(f"ID: {item['id']} | Video: {item['video_id']}")
+                        if item.get('bridge_content'):
+                            with st.expander("Bridge"):
+                                st.write(item['bridge_content'])
+                        else:
+                            st.caption("⚠️ No bridge")
+                            if st.button("Generate Bridge", key=f"bridge_{item['id']}"):
+                                with st.spinner("Generating..."):
+                                    enrich = enrich_joke(item['searchable_text'])
+                                    if enrich:
+                                        supabase.table("comic_segments").update(enrich).eq("id", item['id']).execute()
+                                        st.rerun()
+
+                    with c2:
+                        # EDIT
+                        with st.popover("✏️ Edit"):
+                            new_text = st.text_area("Edit Text", value=item['searchable_text'], key=f"edit_text_{item['id']}")
+                            if st.button("Save", key=f"save_{item['id']}"):
+                                supabase.table("comic_segments").update({"searchable_text": new_text}).eq("id", item['id']).execute()
+                                st.success("Saved!")
+                                time.sleep(1)
+                                st.rerun()
+                        
+                        # DELETE
+                        if st.button("🗑️", key=f"del_{item['id']}", help="Delete Joke"):
+                            if st.session_state.get(f"confirm_{item['id']}"):
+                                supabase.table("comic_segments").delete().eq("id", item['id']).execute()
+                                st.success("Deleted!")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.session_state[f"confirm_{item['id']}"] = True
+                                st.warning("Click again to confirm delete")
+                                
     except Exception as e:
         st.error(f"Load error: {e}")
 
