@@ -1,0 +1,22 @@
+# Environment variables
+.env
+config/credentials.env
+credentials.env
+config/open_ai_api.txt
+open_ai_api.txt
+credentials
+geminiapi_key.env
+
+# Streamlit
+.streamlit/
+secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+myenv/
+.venv/
+.DS_Store

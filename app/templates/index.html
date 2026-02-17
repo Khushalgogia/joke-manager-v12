@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 Joke Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 25px 20px
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #f39c12, #e74c3c, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .header .subtitle {
+            color: #f39c12;
+            font-size: 0.85rem;
+            margin-top: 4px
+        }
+
+        .header p {
+            color: #8b8b9e;
+            margin-top: 4px;
+            font-size: 0.9rem
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 12px;
+            flex-wrap: wrap
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 8px
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f39c12
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #8b8b9e
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap
+        }
+
+        .tab {
+            padding: 10px 14px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: #8b8b9e;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1)
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1)
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            color: white;
+            border-color: transparent
+        }
+
+        .panel {
+            display: none
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        .form-input,
+        .search-input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            outline: none;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            font-family: inherit
+        }
+
+        .form-input:focus,
+        .search-input:focus {
+            border-color: #f39c12
+        }
+
+        .form-input::placeholder,
+        .search-input::placeholder {
+            color: #6b6b7e
+        }
+
+        .form-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.1)
+        }
+
+        .form-group {
+            margin-bottom: 18px
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #c0c0c0;
+            font-size: 0.9rem
+        }
+
+        .btn {
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            font-size: 1.1rem;
+            padding: 16px;
+            width: 100%
+        }
+
+        .btn:hover {
+            transform: scale(1.02)
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        .btn-full {
+            width: 100%
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad)
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #2ecc71)
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b)
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1)
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.75rem
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            padding: 6px 12px;
+            font-size: 0.75rem
+        }
+
+        /* Campaign result cards */
+        .campaign-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+            transition: all 0.3s
+        }
+
+        .campaign-card:hover {
+            border-color: #f39c12
+        }
+
+        .campaign-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .campaign-number {
+            font-weight: 700;
+            color: #f39c12;
+            font-size: 1rem
+        }
+
+        .engine-tag {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600
+        }
+
+        .engine-tag.a {
+            background: rgba(52, 152, 219, 0.3);
+            color: #3498db
+        }
+
+        .engine-tag.b {
+            background: rgba(39, 174, 96, 0.3);
+            color: #27ae60
+        }
+
+        .engine-tag.c {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c
+        }
+
+        .campaign-joke {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: #fff;
+            font-weight: 500;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 12px
+        }
+
+        .campaign-strategy {
+            font-size: 0.8rem;
+            color: #27ae60;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(39, 174, 96, 0.1);
+            border-radius: 6px
+        }
+
+        .campaign-reference {
+            font-size: 0.8rem;
+            color: #8b8b9e;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-style: italic;
+            cursor: pointer
+        }
+
+        .campaign-reference.show {
+            max-height: none
+        }
+
+        .brainstorm-list {
+            font-size: 0.78rem;
+            color: #8b8b9e;
+            padding: 8px 12px;
+            background: rgba(155, 89, 182, 0.08);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: none
+        }
+
+        .brainstorm-list.show {
+            display: block
+        }
+
+        .brainstorm-list li {
+            margin-bottom: 4px;
+            list-style: none
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2)
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 6px;
+            top: 6px;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .result-card,
+        .segment-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1)
+        }
+
+        .result-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .similarity {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: white;
+            font-size: 0.75rem
+        }
+
+        .result-text {
+            font-size: 0.9rem;
+            line-height: 1.5
+        }
+
+        .language-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .language-option {
+            flex: 1;
+            min-width: 90px
+        }
+
+        .language-option input {
+            display: none
+        }
+
+        .language-option label {
+            display: block;
+            padding: 10px 12px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem
+        }
+
+        .language-option input:checked+label {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-color: transparent
+        }
+
+        .segment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px
+        }
+
+        .segment-id {
+            font-weight: 600;
+            color: #f39c12
+        }
+
+        .segment-actions {
+            display: flex;
+            gap: 6px
+        }
+
+        .segment-actions button {
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            border-radius: 5px
+        }
+
+        .segment-card.deleted {
+            opacity: 0.4;
+            text-decoration: line-through
+        }
+
+        .review-summary {
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid #f39c12;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #8b8b9e
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #f39c12;
+            border-radius: 50%;
+            animation: spin 1s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #6b6b7e
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal.active {
+            display: flex
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 14px;
+            padding: 22px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px
+        }
+
+        .modal-header h3 {
+            color: #f39c12
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8b8b9e;
+            font-size: 1.4rem;
+            cursor: pointer
+        }
+
+        /* DB Explorer specific */
+        .db-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 16px;
+            transition: all 0.3s
+        }
+
+        .db-card:hover {
+            border-color: rgba(243, 156, 18, 0.4);
+            background: rgba(255, 255, 255, 0.06)
+        }
+
+        .db-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .db-card-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f39c12
+        }
+
+        .db-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .db-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600
+        }
+
+        .db-badge.ok {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60
+        }
+
+        .db-badge.missing {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c
+        }
+
+        .db-badge.info {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db
+        }
+
+        .db-field {
+            margin-bottom: 10px
+        }
+
+        .db-field-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #8b8b9e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px
+        }
+
+        .db-field-value {
+            font-size: 0.85rem;
+            color: #d0d0d0;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            line-height: 1.5;
+            word-break: break-word
+        }
+
+        .db-field-value.empty {
+            color: #6b6b7e;
+            font-style: italic
+        }
+
+        .db-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap
+        }
+
+        .db-actions .btn {
+            font-size: 0.78rem;
+            padding: 8px 14px
+        }
+
+        .db-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        @media(max-width:600px) {
+            .db-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .db-filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap
+        }
+
+        .filter-btn {
+            padding: 7px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #8b8b9e;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: all 0.2s
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.1)
+        }
+
+        .filter-btn.active {
+            background: rgba(52, 152, 219, 0.3);
+            color: #3498db;
+            border-color: rgba(52, 152, 219, 0.4)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.85rem;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            font-weight: 500
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #27ae60, #2ecc71)
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b)
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+
+        .themes-display {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(155, 89, 182, 0.1);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #c39bd3
+        }
+
+        .count-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px
+        }
+
+        .count-selector label {
+            color: #8b8b9e;
+            font-size: 0.85rem
+        }
+
+        .count-selector select {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            font-family: inherit
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Joke Manager</h1>
+            <div class="subtitle">V12-Aligned · Bridge Embeddings · Gemini Generation</div>
+            <p>Manage jokes, generate campaigns, explore your comedy database</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-segments">-</div>
+                    <div class="stat-label">Jokes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="with-bridge">-</div>
+                    <div class="stat-label">🌉 Bridges</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="without-bridge">-</div>
+                    <div class="stat-label">❌ Missing</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="total-videos">-</div>
+                    <div class="stat-label">Videos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="generate">🎬 Generate</button>
+            <button class="tab" data-tab="dbexplorer">📊 DB Explorer</button>
+            <button class="tab" data-tab="search">🔍 Search</button>
+            <button class="tab" data-tab="add">➕ Add Video</button>
+            <button class="tab" data-tab="manual">✍️ Add Joke</button>
+            <button class="tab" data-tab="manage">⚙️ Manage</button>
+        </div>
+
+        <!-- GENERATE PANEL (V12 Campaign Generation) -->
+        <div class="panel active" id="generate-panel">
+            <div class="form-box">
+                <div class="form-group"><label>📰 Enter News Headline / Topic</label>
+                    <textarea class="form-input" id="topic-input" rows="3"
+                        placeholder="e.g., Bangalore techies stuck in traffic for 5 hours"></textarea>
+                </div>
+                <div class="count-selector">
+                    <label>Number of jokes:</label>
+                    <select id="joke-count">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                    </select>
+                </div>
+                <div style="margin-top:16px">
+                    <button class="btn btn-generate" id="generate-btn">🎬 Generate Campaign (V12 Engine)</button>
+                </div>
+                <div id="themes-display" class="themes-display" style="display:none"></div>
+                <div id="generate-status" style="margin-top:10px;font-size:0.85rem;color:#8b8b9e"></div>
+            </div>
+            <div id="campaign-results" style="margin-top:20px"></div>
+        </div>
+
+        <!-- DB EXPLORER PANEL -->
+        <div class="panel" id="dbexplorer-panel">
+            <div class="form-box" style="margin-bottom:16px">
+                <p style="margin-bottom:12px;color:#8b8b9e;font-size:0.85rem">📊 <strong>DB Explorer</strong> — View
+                    all database fields for each joke. Bridges are the core of V12.</p>
+                <div class="db-filter">
+                    <button class="filter-btn active" data-filter="all" onclick="filterDB('all')">All</button>
+                    <button class="filter-btn" data-filter="no-bridge" onclick="filterDB('no-bridge')">❌ Missing
+                        Bridge</button>
+                    <button class="filter-btn" data-filter="has-bridge" onclick="filterDB('has-bridge')">✅ Has
+                        Bridge</button>
+                </div>
+                <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <button class="btn btn-primary" id="fill-all-btn" onclick="fillAllMissing()"
+                        style="font-size:0.85rem">⚡ Fill All Missing Bridges (Batch of 10)</button>
+                    <span id="fill-all-status" style="font-size:0.8rem;color:#8b8b9e"></span>
+                </div>
+            </div>
+            <div id="db-explorer-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEARCH PANEL -->
+        <div class="panel" id="search-panel">
+            <div class="search-box"><input type="text" class="search-input" id="search-input"
+                    placeholder="Search jokes by topic (uses bridge embedding)..."><button class="search-btn"
+                    id="search-btn">Search</button></div>
+            <div id="search-themes" class="themes-display" style="display:none;margin-bottom:16px"></div>
+            <div class="results" id="results">
+                <div class="no-results">Enter a search term — searches via bridge embeddings (V12-style)</div>
+            </div>
+        </div>
+
+        <!-- ADD VIDEO PANEL -->
+        <div class="panel" id="add-panel">
+            <div class="form-box" id="add-form">
+                <div class="form-group"><label>YouTube URL</label><input type="text" class="form-input" id="video-url"
+                        placeholder="https://www.youtube.com/watch?v=..."></div>
+                <div class="form-group"><label>Language</label>
+                    <div class="language-options">
+                        <div class="language-option"><input type="radio" name="language" value="english"
+                                id="lang-english" checked><label for="lang-english">🇬🇧 English</label></div>
+                        <div class="language-option"><input type="radio" name="language" value="hindi"
+                                id="lang-hindi"><label for="lang-hindi">🇮🇳 Hindi</label></div>
+                        <div class="language-option"><input type="radio" name="language" value="hinglish"
+                                id="lang-hinglish"><label for="lang-hinglish">🔀 Hinglish</label></div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full" id="process-btn">🔄 Process Video</button>
+            </div>
+            <div id="review-section" style="display:none">
+                <div class="review-summary"><span><span id="selected-count">0</span> segments</span>
+                    <div style="display:flex;gap:8px"><button class="btn btn-secondary" id="back-btn">←</button><button
+                            class="btn btn-success" id="upload-btn">✅ Upload</button></div>
+                </div>
+                <div id="review-segments"></div>
+            </div>
+        </div>
+
+        <!-- MANUAL JOKE PANEL -->
+        <div class="panel" id="manual-panel">
+            <div class="form-box">
+                <div class="form-group"><label>✍️ Your Joke / Comedy Bit</label><textarea class="form-input"
+                        id="manual-joke" rows="4" placeholder="Write your joke here..."></textarea></div>
+                <div class="form-group"><label>🏷️ Keywords (comma separated)</label><input type="text"
+                        class="form-input" id="manual-keywords" placeholder="e.g., traffic, bangalore, frustration">
+                </div>
+                <div class="form-group"><label>📍 Source (optional)</label><input type="text" class="form-input"
+                        id="manual-source" placeholder="e.g., self, twitter (default: manual)"></div>
+                <button class="btn btn-success btn-full" id="add-joke-btn">✅ Add to Database</button>
+                <div id="manual-message" style="margin-top:15px;padding:12px;border-radius:8px;display:none"></div>
+            </div>
+        </div>
+
+        <!-- MANAGE PANEL -->
+        <div class="panel" id="manage-panel">
+            <div id="manage-segments">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit</h3><button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="form-group"><label>Text</label><textarea class="form-input" id="edit-searchable"
+                    rows="4"></textarea></div>
+            <div class="form-group"><label>Keywords</label><input type="text" class="form-input" id="edit-keywords">
+            </div>
+            <input type="hidden" id="edit-id">
+            <button class="btn btn-success btn-full" onclick="saveEdit()">💾 Save</button>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="detail-modal">
+        <div class="modal-content" style="max-width:700px">
+            <div class="modal-header">
+                <h3>📊 Joke Details</h3><button class="modal-close" onclick="closeDetailModal()">×</button>
+            </div>
+            <div id="detail-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let reviewSegments = [], currentVideoId = '', allDBSegments = [], currentFilter = 'all';
+
+        // Toast notification
+        function showToast(msg, type = 'success') { const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000) }
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-panel').classList.add('active');
+                if (tab.dataset.tab === 'manage') loadManageSegments();
+                if (tab.dataset.tab === 'dbexplorer') loadDBExplorer();
+            });
+        });
+
+        // Stats
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/stats'); const data = await res.json();
+                document.getElementById('total-segments').textContent = data.total_segments || 0;
+                document.getElementById('with-bridge').textContent = data.with_bridge || 0;
+                document.getElementById('without-bridge').textContent = data.without_bridge || 0;
+                document.getElementById('total-videos').textContent = Object.keys(data.videos || {}).length;
+            } catch (e) { }
+        }
+        loadStats();
+
+        // ============ V12 GENERATE CAMPAIGN ============
+        document.getElementById('generate-btn').addEventListener('click', generateCampaign);
+        async function generateCampaign() {
+            const topic = document.getElementById('topic-input').value.trim();
+            if (!topic) { showToast('❌ Enter a headline/topic', 'error'); return }
+
+            const count = parseInt(document.getElementById('joke-count').value);
+            const btn = document.getElementById('generate-btn');
+            const statusEl = document.getElementById('generate-status');
+            const themesEl = document.getElementById('themes-display');
+            const resultsEl = document.getElementById('campaign-results');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Expanding themes → Searching bridges → Generating via Gemini...';
+            statusEl.textContent = 'This may take 30-90 seconds depending on joke count...';
+            themesEl.style.display = 'none';
+            resultsEl.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/generate-campaign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ headline: topic, count })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    showToast('❌ ' + data.error, 'error');
+                    statusEl.textContent = '';
+                    return;
+                }
+
+                // Show themes
+                if (data.themes) {
+                    themesEl.innerHTML = `🧠 <strong>Themes Extracted:</strong> ${data.themes}`;
+                    themesEl.style.display = 'block';
+                }
+
+                statusEl.innerHTML = `✅ Generated <strong>${data.total_generated}</strong> jokes from <strong>${data.headline}</strong>`;
+
+                if (!data.jokes?.length) {
+                    resultsEl.innerHTML = '<div class="no-results">No jokes could be generated. Try a different topic or ensure your DB has bridge embeddings.</div>';
+                    return;
+                }
+
+                // Render campaign results
+                resultsEl.innerHTML = data.jokes.map((j, i) => {
+                    const engineClass = (j.engine || '').toLowerCase().includes('a') ? 'a' : (j.engine || '').toLowerCase().includes('b') ? 'b' : 'c';
+                    const engineLabel = j.engine || 'Unknown';
+                    return `
+                    <div class="campaign-card">
+                        <div class="campaign-header">
+                            <span class="campaign-number">🎭 Joke ${i + 1}</span>
+                            <div style="display:flex;gap:6px;align-items:center">
+                                <span class="engine-tag ${engineClass}">${engineLabel}</span>
+                                <span style="font-size:0.75rem;color:#8b8b9e">Ref #${j.original_id} · ${(j.similarity * 100).toFixed(0)}% match</span>
+                            </div>
+                        </div>
+                        <div class="campaign-joke">${j.joke}</div>
+                        <div class="campaign-strategy">💡 Strategy: ${j.selected_strategy}</div>
+                        ${j.brainstorming?.length ? `
+                            <div style="font-size:0.78rem;color:#9b59b6;cursor:pointer;margin-bottom:6px" onclick="this.nextElementSibling.classList.toggle('show')">
+                                🧠 Brainstorming (${j.brainstorming.length} options) ▼
+                            </div>
+                            <div class="brainstorm-list">
+                                ${j.brainstorming.map(b => `<li>• ${b}</li>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="campaign-reference" onclick="this.classList.toggle('show')">
+                            📚 Reference: ${j.reference_joke}
+                            ${j.bridge_content ? `<br><em>🌉 Bridge: ${j.bridge_content}</em>` : ''}
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:8px">
+                            <button class="copy-btn" onclick="copyText(\`${(j.joke || '').replace(/`/g, "'")}\`)">📋 Copy Joke</button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (e) {
+                showToast('❌ ' + e.message, 'error');
+                statusEl.textContent = '';
+            }
+            finally {
+                btn.disabled = false;
+                btn.textContent = '🎬 Generate Campaign (V12 Engine)';
+            }
+        }
+
+        // ============ DB EXPLORER ============
+        async function loadDBExplorer() {
+            const container = document.getElementById('db-explorer-list');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch('/api/segments'); const data = await res.json();
+                if (!data.segments?.length) { container.innerHTML = '<div class="no-results">No jokes in database</div>'; return }
+                allDBSegments = data.segments;
+                renderDBExplorer();
+            } catch (e) { container.innerHTML = '<div class="no-results">Error loading</div>' }
+        }
+
+        function filterDB(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => { b.classList.toggle('active', b.dataset.filter === filter) });
+            renderDBExplorer();
+        }
+
+        function renderDBExplorer() {
+            const container = document.getElementById('db-explorer-list');
+            let segs = allDBSegments;
+            if (currentFilter === 'no-bridge') segs = segs.filter(s => !s.bridge_content);
+            else if (currentFilter === 'has-bridge') segs = segs.filter(s => s.bridge_content);
+
+            if (!segs.length) { container.innerHTML = '<div class="no-results">No jokes match this filter</div>'; return }
+
+            container.innerHTML = segs.map(seg => {
+                const hasBridge = !!seg.bridge_content;
+                const hasBridgeEmbed = !!seg.has_bridge_embedding;
+                return `
+                <div class="db-card">
+                    <div class="db-card-header">
+                        <span class="db-card-id">#${seg.id}</span>
+                        <div class="db-badges">
+                            <span class="db-badge info">${seg.video_id || 'manual'}</span>
+                            ${hasBridge ? '<span class="db-badge ok">✅ Bridge</span>' : '<span class="db-badge missing">❌ No Bridge</span>'}
+                            ${hasBridgeEmbed ? '<span class="db-badge ok">✅ Embed</span>' : '<span class="db-badge missing">❌ No Embed</span>'}
+                        </div>
+                    </div>
+                    <div class="db-field">
+                        <div class="db-field-label">Searchable Text</div>
+                        <div class="db-field-value">${(seg.searchable_text || '').substring(0, 200)}${(seg.searchable_text || '').length > 200 ? '...' : ''}</div>
+                    </div>
+                    <div class="db-field">
+                        <div class="db-field-label">🌉 Bridge Content</div>
+                        <div class="db-field-value ${!hasBridge ? 'empty' : ''}">${seg.bridge_content || 'Not generated yet'}</div>
+                    </div>
+                    <div class="db-grid">
+                        <div class="db-field">
+                            <div class="db-field-label">🏷️ Meta Tags</div>
+                            <div class="db-field-value ${!(seg.meta_tags && seg.meta_tags.length) ? 'empty' : ''}">${seg.meta_tags && seg.meta_tags.length ? seg.meta_tags.join(', ') : 'None'}</div>
+                        </div>
+                        <div class="db-field">
+                            <div class="db-field-label">📅 Created</div>
+                            <div class="db-field-value">${seg.created_at ? new Date(seg.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</div>
+                        </div>
+                    </div>
+                    <div class="db-actions">
+                        <button class="btn btn-refresh" onclick="refreshBridge(${seg.id})">🔄 Refresh Bridge</button>
+                        <button class="btn btn-secondary btn-sm" onclick="viewDetails(${seg.id})">👁️ Full Details</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function refreshBridge(id) {
+            showToast('⏳ Refreshing bridge...', 'success');
+            try {
+                const res = await fetch(`/api/segments/${id}/refresh-bridge`, { method: 'POST' });
+                const data = await res.json();
+                if (data.error) { showToast('❌ ' + data.error, 'error'); return }
+                showToast(`✅ Bridge: ${data.bridge_content?.substring(0, 80)}...`);
+                loadDBExplorer(); loadStats();
+            } catch (e) { showToast('❌ ' + e.message, 'error') }
+        }
+
+        async function viewDetails(id) {
+            try {
+                const res = await fetch(`/api/segments/${id}/details`); const data = await res.json();
+                if (data.error) { showToast('❌ ' + data.error, 'error'); return }
+                const s = data.segment;
+                document.getElementById('detail-content').innerHTML = `
+                    <div class="db-field"><div class="db-field-label">ID</div><div class="db-field-value">${s.id}</div></div>
+                    <div class="db-field"><div class="db-field-label">Video ID / Source</div><div class="db-field-value">${s.video_id || 'N/A'}</div></div>
+                    <div class="db-field"><div class="db-field-label">Original Text</div><div class="db-field-value ${!s.original_text ? 'empty' : ''}">${s.original_text || 'Empty'}</div></div>
+                    <div class="db-field"><div class="db-field-label">Searchable Text</div><div class="db-field-value">${s.searchable_text || 'N/A'}</div></div>
+                    <div class="db-field"><div class="db-field-label">🌉 Bridge Content</div><div class="db-field-value ${!s.bridge_content ? 'empty' : ''}">${s.bridge_content || 'Not generated'}</div></div>
+                    <div class="db-field"><div class="db-field-label">🏷️ Meta Tags</div><div class="db-field-value">${s.meta_tags?.join(', ') || 'None'}</div></div>
+                    <div class="db-grid">
+                        <div class="db-field"><div class="db-field-label">Has Embedding</div><div class="db-field-value">${s.has_embedding ? '✅ Yes' : '❌ No'}</div></div>
+                        <div class="db-field"><div class="db-field-label">Has Bridge Embedding</div><div class="db-field-value">${s.has_bridge_embedding ? '✅ Yes' : '❌ No'}</div></div>
+                    </div>
+                    <div class="db-field"><div class="db-field-label">Created At</div><div class="db-field-value">${s.created_at ? new Date(s.created_at).toLocaleString() : 'N/A'}</div></div>
+                `;
+                document.getElementById('detail-modal').classList.add('active');
+            } catch (e) { showToast('❌ ' + e.message, 'error') }
+        }
+        function closeDetailModal() { document.getElementById('detail-modal').classList.remove('active') }
+
+        // ============ FILL ALL MISSING BRIDGES ============
+        async function fillAllMissing() {
+            const btn = document.getElementById('fill-all-btn');
+            const status = document.getElementById('fill-all-status');
+            btn.disabled = true; btn.textContent = '⏳ Processing batch...';
+            status.textContent = 'Working... This may take a minute per joke.';
+            try {
+                const res = await fetch('/api/fill-all-missing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 10 }) });
+                const data = await res.json();
+                if (data.error) { showToast('❌ ' + data.error, 'error'); status.textContent = ''; return }
+                showToast(data.message);
+                status.innerHTML = `✅ Filled ${data.processed} bridges. ${data.remaining > 0 ? `<strong>${data.remaining} still remaining</strong> — click again!` : '🎉 All done!'}`;
+                status.style.color = data.remaining > 0 ? '#f39c12' : '#27ae60';
+                loadDBExplorer(); loadStats();
+            } catch (e) { showToast('❌ ' + e.message, 'error'); status.textContent = '' }
+            finally { btn.disabled = false; btn.textContent = '⚡ Fill All Missing Bridges (Batch of 10)' }
+        }
+
+        function copyText(text) { navigator.clipboard.writeText(text); showToast('📋 Copied!') }
+
+        // ============ SEARCH (V12-style Bridge Search) ============
+        document.getElementById('search-btn').addEventListener('click', performSearch);
+        document.getElementById('search-input').addEventListener('keypress', e => { if (e.key === 'Enter') performSearch() });
+        async function performSearch() {
+            const query = document.getElementById('search-input').value.trim(); if (!query) return;
+            const r = document.getElementById('results'); r.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            const themesEl = document.getElementById('search-themes');
+            try {
+                const res = await fetch('/api/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) }); const data = await res.json();
+                if (data.themes) {
+                    themesEl.innerHTML = `🧠 <strong>Themes:</strong> ${data.themes}`;
+                    themesEl.style.display = 'block';
+                }
+                if (!data.results?.length) { r.innerHTML = '<div class="no-results">No matches</div>'; return }
+                r.innerHTML = data.results.map(r => `<div class="result-card"><div class="result-meta"><span class="similarity">${(r.similarity * 100).toFixed(0)}%</span><span>${r.video_id || 'manual'}</span></div><div class="result-text">${r.searchable_text}</div>${r.bridge_content ? `<div style="margin-top:8px;font-size:0.8rem;color:#8b8b9e;font-style:italic">🌉 ${r.bridge_content}</div>` : ''}</div>`).join('');
+            } catch (e) { r.innerHTML = '<div class="no-results">Error</div>' }
+        }
+
+        // ============ ADD VIDEO ============
+        document.getElementById('process-btn').addEventListener('click', processVideo);
+        async function processVideo() {
+            const url = document.getElementById('video-url').value.trim(); const language = document.querySelector('input[name="language"]:checked').value; if (!url) return;
+            document.getElementById('process-btn').disabled = true; document.getElementById('process-btn').textContent = '⏳ Processing...';
+            try {
+                const res = await fetch('/api/process-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, language }) }); const data = await res.json();
+                if (data.error) { alert(data.error); return } reviewSegments = data.segments; currentVideoId = data.video_id;
+                document.getElementById('add-form').style.display = 'none'; document.getElementById('review-section').style.display = 'block'; renderReviewSegments();
+            } catch (e) { alert(e.message) }
+            finally { document.getElementById('process-btn').disabled = false; document.getElementById('process-btn').textContent = '🔄 Process Video' }
+        }
+        function renderReviewSegments() {
+            document.getElementById('review-segments').innerHTML = reviewSegments.map((seg, i) => `
+                <div class="segment-card ${seg.deleted ? 'deleted' : ''}"><div class="segment-header"><span class="segment-id">#${seg.segment_id}</span><div class="segment-actions"><button class="btn btn-secondary" onclick="editReviewSeg(${i})">✏️</button><button class="btn ${seg.deleted ? 'btn-success' : 'btn-danger'}" onclick="toggleDel(${i})">${seg.deleted ? '↩️' : '🗑️'}</button></div></div><div style="font-size:0.85rem">${seg.searchable_content}</div></div>
+            `).join('');
+            document.getElementById('selected-count').textContent = reviewSegments.filter(s => !s.deleted).length;
+        }
+        function toggleDel(i) { reviewSegments[i].deleted = !reviewSegments[i].deleted; renderReviewSegments() }
+        function editReviewSeg(i) { const n = prompt('Edit:', reviewSegments[i].searchable_content); if (n !== null) { reviewSegments[i].searchable_content = n; renderReviewSegments() } }
+        document.getElementById('back-btn').addEventListener('click', () => { document.getElementById('add-form').style.display = 'block'; document.getElementById('review-section').style.display = 'none' });
+        document.getElementById('upload-btn').addEventListener('click', async () => {
+            const sel = reviewSegments.filter(s => !s.deleted); if (!sel.length) return; document.getElementById('upload-btn').disabled = true;
+            try {
+                const res = await fetch('/api/upload-segments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ video_id: currentVideoId, segments: sel }) }); const data = await res.json();
+                showToast(data.message || 'Done!'); document.getElementById('video-url').value = ''; document.getElementById('add-form').style.display = 'block'; document.getElementById('review-section').style.display = 'none'; loadStats();
+            } catch (e) { alert(e.message) } finally { document.getElementById('upload-btn').disabled = false }
+        });
+
+        // ============ MANUAL JOKE ============
+        document.getElementById('add-joke-btn').addEventListener('click', addManualJoke);
+        async function addManualJoke() {
+            const jokeText = document.getElementById('manual-joke').value.trim(); const keywords = document.getElementById('manual-keywords').value.split(',').map(k => k.trim()).filter(k => k); const source = document.getElementById('manual-source').value.trim() || 'manual'; const msgDiv = document.getElementById('manual-message');
+            if (!jokeText) { msgDiv.style.display = 'block'; msgDiv.style.background = 'rgba(231,76,60,0.2)'; msgDiv.style.color = '#e74c3c'; msgDiv.textContent = '❌ Please enter a joke'; return }
+            const btn = document.getElementById('add-joke-btn'); btn.disabled = true; btn.textContent = '⏳ Adding + generating bridge...';
+            try {
+                const res = await fetch('/api/add-joke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ joke_text: jokeText, keywords, source }) }); const data = await res.json();
+                if (data.error) { msgDiv.style.display = 'block'; msgDiv.style.background = 'rgba(231,76,60,0.2)'; msgDiv.style.color = '#e74c3c'; msgDiv.textContent = '❌ ' + data.error }
+                else {
+                    msgDiv.style.display = 'block'; msgDiv.style.background = 'rgba(39,174,96,0.15)'; msgDiv.style.color = '#2ecc71';
+                    let enrichInfo = `✅ ${data.message}`;
+                    if (data.has_bridge) enrichInfo += `\n🌉 Bridge: ${data.bridge_content}`;
+                    msgDiv.style.whiteSpace = 'pre-wrap'; msgDiv.textContent = enrichInfo;
+                    document.getElementById('manual-joke').value = ''; document.getElementById('manual-keywords').value = ''; document.getElementById('manual-source').value = ''; loadStats(); loadDBExplorer();
+                }
+            } catch (e) { msgDiv.style.display = 'block'; msgDiv.style.background = 'rgba(231,76,60,0.2)'; msgDiv.style.color = '#e74c3c'; msgDiv.textContent = '❌ ' + e.message }
+            finally { btn.disabled = false; btn.textContent = '✅ Add to Database' }
+        }
+
+        // ============ MANAGE ============
+        async function loadManageSegments() {
+            const container = document.getElementById('manage-segments'); container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch('/api/segments'); const data = await res.json();
+                if (!data.segments?.length) { container.innerHTML = '<div class="no-results">No segments</div>'; return }
+                container.innerHTML = data.segments.map(seg => `
+                    <div class="segment-card" id="manage-seg-${seg.id}"><div class="segment-header"><span class="segment-id">${seg.id} | ${seg.video_id}</span><div class="segment-actions"><button class="btn btn-secondary" onclick="openEdit(${seg.id}, \`${(seg.searchable_text || '').replace(/`/g, "'")}\`, '${(seg.meta_tags || []).join(', ')}')">✏️</button><button class="btn btn-danger" onclick="deleteSeg(${seg.id})">🗑️</button></div></div><div style="font-size:0.85rem">${seg.searchable_text?.substring(0, 150)}...</div></div>
+                `).join('');
+            } catch (e) { container.innerHTML = '<div class="no-results">Error</div>' }
+        }
+        function openEdit(id, text, keywords) { document.getElementById('edit-id').value = id; document.getElementById('edit-searchable').value = text; document.getElementById('edit-keywords').value = keywords; document.getElementById('edit-modal').classList.add('active') }
+        function closeModal() { document.getElementById('edit-modal').classList.remove('active') }
+        async function saveEdit() {
+            const id = document.getElementById('edit-id').value;
+            try { await fetch(`/api/segments/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ searchable_text: document.getElementById('edit-searchable').value, meta_tags: document.getElementById('edit-keywords').value.split(',').map(k => k.trim()).filter(k => k) }) }); showToast('💾 Saved!'); closeModal(); loadManageSegments() } catch (e) { alert('Error') }
+        }
+        async function deleteSeg(id) { if (!confirm('Delete?')) return; try { await fetch(`/api/segments/${id}`, { method: 'DELETE' }); document.getElementById(`manage-seg-${id}`).remove(); loadStats(); showToast('🗑️ Deleted') } catch (e) { } }
+    </script>
+</body>
+
+</html>
