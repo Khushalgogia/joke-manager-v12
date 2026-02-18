@@ -40,49 +40,26 @@ st.markdown("""
         100% { background-position: 0% 50%; }
     }
 
-    /* ─── Floating Bubbles ─── */
-    .stApp::before {
-        content: '';
+    /* ─── Floating Bubbles (injected via HTML divs) ─── */
+    .bubble-container {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         pointer-events: none;
         z-index: 0;
-        background-image:
-            radial-gradient(circle 80px at 10% 20%, rgba(255, 0, 128, 0.12) 0%, transparent 70%),
-            radial-gradient(circle 120px at 80% 10%, rgba(0, 200, 255, 0.10) 0%, transparent 70%),
-            radial-gradient(circle 60px at 30% 70%, rgba(138, 43, 226, 0.15) 0%, transparent 70%),
-            radial-gradient(circle 100px at 70% 80%, rgba(255, 215, 0, 0.08) 0%, transparent 70%),
-            radial-gradient(circle 90px at 50% 40%, rgba(0, 255, 200, 0.07) 0%, transparent 70%),
-            radial-gradient(circle 70px at 90% 60%, rgba(255, 100, 200, 0.10) 0%, transparent 70%),
-            radial-gradient(circle 110px at 20% 90%, rgba(100, 149, 237, 0.09) 0%, transparent 70%);
-        animation: bubbleFloat 20s ease-in-out infinite alternate;
+        overflow: hidden;
     }
-    @keyframes bubbleFloat {
-        0% { transform: translateY(0px) scale(1); opacity: 0.8; }
-        33% { transform: translateY(-30px) scale(1.05); opacity: 1; }
-        66% { transform: translateY(15px) scale(0.95); opacity: 0.9; }
-        100% { transform: translateY(-20px) scale(1.02); opacity: 1; }
+    .bubble {
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0;
+        animation: floatUp linear infinite;
     }
-
-    /* Extra animated bubbles layer */
-    .stApp::after {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        pointer-events: none;
-        z-index: 0;
-        background-image:
-            radial-gradient(circle 50px at 15% 45%, rgba(0, 255, 128, 0.08) 0%, transparent 70%),
-            radial-gradient(circle 75px at 85% 35%, rgba(255, 128, 0, 0.07) 0%, transparent 70%),
-            radial-gradient(circle 65px at 45% 15%, rgba(200, 100, 255, 0.10) 0%, transparent 70%),
-            radial-gradient(circle 85px at 60% 65%, rgba(0, 180, 255, 0.09) 0%, transparent 70%),
-            radial-gradient(circle 55px at 25% 55%, rgba(255, 50, 100, 0.08) 0%, transparent 70%);
-        animation: bubbleFloat2 25s ease-in-out infinite alternate-reverse;
-    }
-    @keyframes bubbleFloat2 {
-        0% { transform: translateY(10px) scale(1.02); opacity: 0.7; }
-        50% { transform: translateY(-25px) scale(0.98); opacity: 1; }
-        100% { transform: translateY(5px) scale(1.03); opacity: 0.85; }
+    @keyframes floatUp {
+        0% { transform: translateY(100vh) scale(0.3); opacity: 0; }
+        10% { opacity: 0.6; }
+        50% { opacity: 0.4; }
+        90% { opacity: 0.1; }
+        100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
     }
 
     /* ─── All Content Above Bubbles ─── */
@@ -308,6 +285,33 @@ st.markdown("""
         border-radius: 12px;
         backdrop-filter: blur(15px);
     }
+    /* Popover panel (the floating content) */
+    [data-testid="stPopoverBody"],
+    div[data-baseweb="popover"] > div {
+        background: rgba(15, 8, 40, 0.98) !important;
+        border: 1px solid rgba(138, 43, 226, 0.4) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(20px) !important;
+    }
+    [data-testid="stPopoverBody"] p,
+    [data-testid="stPopoverBody"] span,
+    [data-testid="stPopoverBody"] label,
+    div[data-baseweb="popover"] p,
+    div[data-baseweb="popover"] span,
+    div[data-baseweb="popover"] label {
+        color: #e8e8ff !important;
+    }
+    [data-testid="stPopoverBody"] textarea,
+    div[data-baseweb="popover"] textarea {
+        background: rgba(20, 10, 50, 0.8) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(138, 43, 226, 0.5) !important;
+    }
+
+    /* ─── Checkbox ─── */
+    .stCheckbox label span {
+        color: #e8e8ff !important;
+    }
 
     /* ─── Scrollbar ─── */
     ::-webkit-scrollbar { width: 8px; }
@@ -318,6 +322,24 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ─── Inject animated bubble divs ─────────────────────────────────────────────
+import random as _rng
+_bubble_colors = [
+    'rgba(255, 0, 128, 0.25)', 'rgba(0, 200, 255, 0.2)', 'rgba(138, 43, 226, 0.3)',
+    'rgba(255, 215, 0, 0.2)', 'rgba(0, 255, 200, 0.15)', 'rgba(255, 100, 200, 0.2)',
+    'rgba(100, 149, 237, 0.2)', 'rgba(0, 255, 128, 0.15)', 'rgba(200, 100, 255, 0.2)',
+]
+_bubbles_html = '<div class="bubble-container">'
+for _i in range(20):
+    _size = _rng.randint(15, 80)
+    _left = _rng.randint(0, 100)
+    _dur = _rng.uniform(8, 20)
+    _delay = _rng.uniform(0, 15)
+    _color = _rng.choice(_bubble_colors)
+    _bubbles_html += f'<div class="bubble" style="width:{_size}px;height:{_size}px;left:{_left}%;background:{_color};animation-duration:{_dur:.1f}s;animation-delay:{_delay:.1f}s;"></div>'
+_bubbles_html += '</div>'
+st.markdown(_bubbles_html, unsafe_allow_html=True)
 
 
 # ─── Clients ─────────────────────────────────────────────────────────────────
@@ -705,77 +727,204 @@ with tab_db:
 # ─── TAB: ADD VIDEO ──────────────────────────────────────────────────────────
 with tab_add_video:
     st.header("➕ Add from YouTube")
-    url = st.text_input("YouTube URL")
-    lang = st.selectbox("Language", ["english", "hindi", "hinglish"])
     
-    if st.button("Process Video") and url:
-        with st.status("Processing transcript...") as status:
+    # Initialize session state for extracted jokes
+    if 'extracted_jokes' not in st.session_state:
+        st.session_state.extracted_jokes = []
+    if 'video_id' not in st.session_state:
+        st.session_state.video_id = None
+    
+    url = st.text_input("YouTube URL", key="yt_url")
+    lang = st.selectbox("Language", ["english", "hindi", "hinglish"], key="yt_lang")
+    
+    col_process, col_clear = st.columns([3, 1])
+    with col_process:
+        process_btn = st.button("🔍 Process Video", type="primary")
+    with col_clear:
+        if st.button("🗑️ Clear Results"):
+            st.session_state.extracted_jokes = []
+            st.session_state.video_id = None
+            st.rerun()
+    
+    # ── Step 1: Process Video & Extract Jokes ───────────────────
+    if process_btn and url:
+        with st.status("Processing transcript...", expanded=True) as status:
             video_id_match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11})", url)
             if not video_id_match:
-                st.error("Invalid URL")
+                st.error("Invalid YouTube URL")
                 st.stop()
-            video_id = video_id_match.group(1)
+            vid = video_id_match.group(1)
             
             try:
                 # Fetch transcript (v1.x API)
+                st.write("📡 Fetching transcript...")
                 ytt_api = YouTubeTranscriptApi()
-                transcript_data = ytt_api.fetch(video_id)
+                transcript_data = ytt_api.fetch(vid)
                 full_text = " ".join([snippet.text for snippet in transcript_data])
-                st.write(f"Fetched {len(full_text)} chars.")
+                st.write(f"✅ Fetched {len(full_text)} chars.")
                 
-                # Extract jokes (simplified for Streamlit)
-                # For robustness, we'll process 1 chunk for now or loop
-                chunk_size = 8000
-                chunks = [full_text[i:i+chunk_size] for i in range(0, len(full_text), chunk_size)]
+                # Chunk with overlap for better extraction
+                chunk_size = 6000
+                overlap = 1500
+                chunks = []
+                pos = 0
+                while pos < len(full_text):
+                    end_pos = min(pos + chunk_size, len(full_text))
+                    chunks.append(full_text[pos:end_pos])
+                    pos = end_pos - overlap if end_pos < len(full_text) else len(full_text)
                 
-                extracted_jokes = []
-                
+                all_jokes = []
                 bar = st.progress(0)
                 for i, chunk in enumerate(chunks):
                     status.update(label=f"Extracting jokes from chunk {i+1}/{len(chunks)}...")
                     
-                    sys_prompt = "You are a Comedy Curator. Extract 'Standout Comedy Segments'. Return JSON: {'segments': [{'searchable_content': 'joke text', 'keywords': ['tag']}]}"
+                    sys_prompt = """You are a Comedy Curator. Extract ALL standout comedy segments from this transcript.
+Return JSON: {"segments": [{"searchable_content": "the joke text cleaned up for readability", "keywords": ["tag1", "tag2"]}]}
+IMPORTANT: Extract EVERY joke, don't skip any. Clean up the text for readability but keep the joke intact."""
                     
-                    resp = openai_client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[
-                            {"role": "system", "content": sys_prompt},
-                            {"role": "user", "content": f"Extract jokes:\n{chunk}"}
-                        ],
-                        response_format={"type": "json_object"}
-                    )
-                    data = json.loads(resp.choices[0].message.content)
-                    extracted_jokes.extend(data.get('segments', []))
+                    try:
+                        resp = openai_client.chat.completions.create(
+                            model="gpt-4o",
+                            messages=[
+                                {"role": "system", "content": sys_prompt},
+                                {"role": "user", "content": f"Extract ALL jokes:\n{chunk}"}
+                            ],
+                            response_format={"type": "json_object"},
+                            temperature=0.4
+                        )
+                        data = json.loads(resp.choices[0].message.content)
+                        for seg in data.get('segments', []):
+                            seg['selected'] = True
+                            all_jokes.append(seg)
+                    except Exception as chunk_err:
+                        st.warning(f"Chunk {i+1} failed: {chunk_err}")
                     bar.progress((i + 1) / len(chunks))
                 
-                if extracted_jokes:
-                    st.success(f"Found {len(extracted_jokes)} jokes!")
-                    
-                    # Review & Save
-                    display_df = pd.DataFrame(extracted_jokes)
-                    edited_df = st.data_editor(display_df, num_rows="dynamic")
-                    
-                    if st.button("Save Selected to DB"):
-                        rows = []
-                        with st.spinner("Saving & Enriching..."):
-                            for _, row in edited_df.iterrows():
-                                text = row.get('searchable_content')
-                                if text:
-                                    enrichment = enrich_joke(text)
-                                    db_row = {
-                                        "video_id": video_id,
-                                        "searchable_text": text,
-                                        "meta_tags": row.get('keywords', []),
-                                        "embedding": get_embedding(text)
-                                    }
-                                    db_row.update(enrichment)
-                                    rows.append(db_row)
-                            
-                            if rows:
-                                supabase.table("comic_segments").insert(rows).execute()
-                                st.success(f"Saved {len(rows)} jokes!")
+                # Deduplicate
+                unique = []
+                seen = set()
+                for j in all_jokes:
+                    key = j.get('searchable_content', '')[:80].lower().strip()
+                    if key and key not in seen:
+                        seen.add(key)
+                        unique.append(j)
+                
+                st.session_state.extracted_jokes = unique
+                st.session_state.video_id = vid
+                status.update(label=f"Done! Found {len(unique)} unique jokes.", state="complete")
+                st.rerun()
+                
             except Exception as e:
                 st.error(f"Error: {e}")
+    
+    # ── Step 2: Review, Edit, Select & Push ──────────────────────
+    if st.session_state.extracted_jokes:
+        jokes = st.session_state.extracted_jokes
+        vid = st.session_state.video_id
+        
+        st.success(f"📋 {len(jokes)} jokes extracted from video `{vid}` — Review, edit, and push below.")
+        st.divider()
+        
+        # Select All / Deselect All
+        col_sel, col_desel, col_push_all = st.columns(3)
+        with col_sel:
+            if st.button("☑️ Select All"):
+                for j in st.session_state.extracted_jokes:
+                    j['selected'] = True
+                st.rerun()
+        with col_desel:
+            if st.button("⬜ Deselect All"):
+                for j in st.session_state.extracted_jokes:
+                    j['selected'] = False
+                st.rerun()
+        with col_push_all:
+            push_all_btn = st.button("🚀 Push All Selected", type="primary")
+        
+        # Handle batch push
+        if push_all_btn:
+            selected = [j for j in jokes if j.get('selected', False)]
+            if not selected:
+                st.warning("No jokes selected!")
+            else:
+                rows = []
+                progress = st.progress(0, text="Enriching & saving...")
+                for idx, joke in enumerate(selected):
+                    text = joke.get('searchable_content', '')
+                    if text:
+                        enrichment = enrich_joke(text)
+                        db_row = {
+                            "video_id": vid,
+                            "searchable_text": text,
+                            "meta_tags": joke.get('keywords', []),
+                            "embedding": get_embedding(text)
+                        }
+                        db_row.update(enrichment)
+                        rows.append(db_row)
+                    progress.progress((idx + 1) / len(selected), text=f"Processing {idx+1}/{len(selected)}...")
+                
+                if rows:
+                    supabase.table("comic_segments").insert(rows).execute()
+                    st.success(f"✅ Saved {len(rows)} jokes to Supabase!")
+                    # Remove pushed jokes from list
+                    st.session_state.extracted_jokes = [j for j in jokes if not j.get('selected', False)]
+                    time.sleep(1.5)
+                    st.rerun()
+        
+        st.divider()
+        
+        # Individual joke cards
+        for i, joke in enumerate(jokes):
+            with st.container(border=True):
+                col_check, col_text, col_actions = st.columns([0.5, 5, 1.5])
+                
+                with col_check:
+                    selected = st.checkbox(
+                        "Select", value=joke.get('selected', True), 
+                        key=f"sel_{i}", label_visibility="collapsed"
+                    )
+                    st.session_state.extracted_jokes[i]['selected'] = selected
+                
+                with col_text:
+                    # Editable joke text
+                    new_text = st.text_area(
+                        f"Joke #{i+1}", 
+                        value=joke.get('searchable_content', ''), 
+                        key=f"joke_text_{i}",
+                        height=80,
+                        label_visibility="collapsed"
+                    )
+                    st.session_state.extracted_jokes[i]['searchable_content'] = new_text
+                    
+                    # Tags
+                    tags = joke.get('keywords', [])
+                    if tags:
+                        st.caption(f"🏷️ {', '.join(tags)}")
+                
+                with col_actions:
+                    # Push individual joke
+                    if st.button("📤 Push", key=f"push_{i}"):
+                        text = new_text.strip()
+                        if text:
+                            with st.spinner("Saving..."):
+                                enrichment = enrich_joke(text)
+                                db_row = {
+                                    "video_id": vid,
+                                    "searchable_text": text,
+                                    "meta_tags": joke.get('keywords', []),
+                                    "embedding": get_embedding(text)
+                                }
+                                db_row.update(enrichment)
+                                supabase.table("comic_segments").insert(db_row).execute()
+                                st.success("✅ Saved!")
+                                # Remove from list
+                                st.session_state.extracted_jokes.pop(i)
+                                time.sleep(1)
+                                st.rerun()
+                    
+                    # Delete from review list
+                    if st.button("❌", key=f"remove_{i}", help="Remove from list"):
+                        st.session_state.extracted_jokes.pop(i)
+                        st.rerun()
 
 # ─── TAB: MANUAL ADD ─────────────────────────────────────────────────────────
 with tab_manual:
