@@ -13,7 +13,6 @@ from openai import OpenAI
 from supabase import create_client
 from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.formatters import TextFormatter
 
 # ─── Config & Setup ──────────────────────────────────────────────────────────
 
@@ -24,41 +23,298 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS
+# Custom CSS — Vibrant Animated Design
 st.markdown("""
 <style>
+    /* ─── Animated Gradient Background ─── */
     .stApp {
-        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-        color: #e0e0e0;
+        background: linear-gradient(-45deg, #0d0221, #150734, #1a0a3e, #0c0626, #1b0b40);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        color: #f0f0ff;
+        min-height: 100vh;
     }
-    .stButton>button {
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* ─── Floating Bubbles ─── */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image:
+            radial-gradient(circle 80px at 10% 20%, rgba(255, 0, 128, 0.12) 0%, transparent 70%),
+            radial-gradient(circle 120px at 80% 10%, rgba(0, 200, 255, 0.10) 0%, transparent 70%),
+            radial-gradient(circle 60px at 30% 70%, rgba(138, 43, 226, 0.15) 0%, transparent 70%),
+            radial-gradient(circle 100px at 70% 80%, rgba(255, 215, 0, 0.08) 0%, transparent 70%),
+            radial-gradient(circle 90px at 50% 40%, rgba(0, 255, 200, 0.07) 0%, transparent 70%),
+            radial-gradient(circle 70px at 90% 60%, rgba(255, 100, 200, 0.10) 0%, transparent 70%),
+            radial-gradient(circle 110px at 20% 90%, rgba(100, 149, 237, 0.09) 0%, transparent 70%);
+        animation: bubbleFloat 20s ease-in-out infinite alternate;
+    }
+    @keyframes bubbleFloat {
+        0% { transform: translateY(0px) scale(1); opacity: 0.8; }
+        33% { transform: translateY(-30px) scale(1.05); opacity: 1; }
+        66% { transform: translateY(15px) scale(0.95); opacity: 0.9; }
+        100% { transform: translateY(-20px) scale(1.02); opacity: 1; }
+    }
+
+    /* Extra animated bubbles layer */
+    .stApp::after {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image:
+            radial-gradient(circle 50px at 15% 45%, rgba(0, 255, 128, 0.08) 0%, transparent 70%),
+            radial-gradient(circle 75px at 85% 35%, rgba(255, 128, 0, 0.07) 0%, transparent 70%),
+            radial-gradient(circle 65px at 45% 15%, rgba(200, 100, 255, 0.10) 0%, transparent 70%),
+            radial-gradient(circle 85px at 60% 65%, rgba(0, 180, 255, 0.09) 0%, transparent 70%),
+            radial-gradient(circle 55px at 25% 55%, rgba(255, 50, 100, 0.08) 0%, transparent 70%);
+        animation: bubbleFloat2 25s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes bubbleFloat2 {
+        0% { transform: translateY(10px) scale(1.02); opacity: 0.7; }
+        50% { transform: translateY(-25px) scale(0.98); opacity: 1; }
+        100% { transform: translateY(5px) scale(1.03); opacity: 0.85; }
+    }
+
+    /* ─── All Content Above Bubbles ─── */
+    .stApp > * { position: relative; z-index: 1; }
+    section[data-testid="stSidebar"] > * { position: relative; z-index: 1; }
+
+    /* ─── Typography ─── */
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        text-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+    }
+    h1 { 
+        background: linear-gradient(90deg, #ff6ec7, #7b68ee, #00d4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+    }
+    p, span, label, .stMarkdown, li {
+        color: #e8e8ff !important;
+    }
+
+    /* ─── Glassmorphism Cards / Containers ─── */
+    [data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] {
+        position: relative; z-index: 1;
+    }
+    div[data-testid="stExpander"] {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+    div[data-testid="column"] {
+        position: relative; z-index: 1;
+    }
+    /* Bordered containers (st.container(border=True)) */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(20, 10, 50, 0.6) !important;
+        border: 1px solid rgba(138, 43, 226, 0.3) !important;
+        border-radius: 16px !important;
+        backdrop-filter: blur(12px) !important;
+        box-shadow: 0 4px 30px rgba(138, 43, 226, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+        border-color: rgba(0, 212, 255, 0.5) !important;
+        box-shadow: 0 8px 40px rgba(0, 212, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+    }
+
+    /* ─── Buttons — Neon Glow ─── */
+    .stButton > button {
         width: 100%;
-        border-radius: 8px;
+        border-radius: 12px !important;
         height: 3em;
-        font-weight: 600;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #7b2ff7 0%, #c41cff 50%, #ff6ec7 100%) !important;
+        border: none !important;
+        box-shadow: 0 0 15px rgba(196, 28, 255, 0.3), 0 4px 15px rgba(0,0,0,0.2) !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
-    /* Cards */
-    div.st-emotion-cache-1r6slb0, div.st-emotion-cache-1629p8f {
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1rem;
+    .stButton > button:hover {
+        box-shadow: 0 0 30px rgba(196, 28, 255, 0.5), 0 0 60px rgba(123, 47, 247, 0.2), 0 6px 20px rgba(0,0,0,0.3) !important;
+        transform: translateY(-2px) scale(1.02);
     }
-    /* Success badges */
-    .badge-success {
-        background-color: rgba(39, 174, 96, 0.2);
-        color: #2ecc71;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
+    .stButton > button:active {
+        transform: translateY(0px) scale(0.98);
     }
-    /* Warning badges */
-    .badge-warning {
-        background-color: rgba(243, 156, 18, 0.2);
-        color: #f39c12;
-        padding: 2px 8px;
+    /* Primary button override */
+    button[kind="primary"] {
+        background: linear-gradient(135deg, #00d4ff 0%, #7b68ee 50%, #ff6ec7 100%) !important;
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 4px 15px rgba(0,0,0,0.2) !important;
+    }
+    button[kind="primary"]:hover {
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.6), 0 0 80px rgba(123, 104, 238, 0.2) !important;
+    }
+
+    /* ─── Inputs ─── */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stSelectbox > div > div {
+        background: rgba(20, 10, 50, 0.7) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(138, 43, 226, 0.4) !important;
+        border-radius: 10px !important;
+        transition: all 0.3s ease;
+    }
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #00d4ff !important;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3) !important;
+    }
+    .stTextInput > div > div > input::placeholder,
+    .stTextArea > div > div > textarea::placeholder {
+        color: rgba(200, 200, 255, 0.4) !important;
+    }
+
+    /* ─── Sidebar ─── */
+    section[data-testid="stSidebar"] {
+        background: rgba(10, 5, 30, 0.95) !important;
+        border-right: 1px solid rgba(138, 43, 226, 0.2) !important;
+    }
+    section[data-testid="stSidebar"] .stMarkdown p {
+        color: #d0d0ff !important;
+    }
+
+    /* ─── Tabs ─── */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: rgba(20, 10, 50, 0.5);
+        border-radius: 16px;
+        padding: 6px;
+        border: 1px solid rgba(138, 43, 226, 0.2);
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 12px !important;
+        color: #b0b0ff !important;
+        font-weight: 600 !important;
+        padding: 8px 20px !important;
+        transition: all 0.3s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(123, 47, 247, 0.4), rgba(0, 212, 255, 0.3)) !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 15px rgba(123, 47, 247, 0.3);
+    }
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: transparent !important;
+    }
+    .stTabs [data-baseweb="tab-border"] {
+        display: none;
+    }
+
+    /* ─── Metrics ─── */
+    [data-testid="stMetric"] {
+        background: rgba(20, 10, 50, 0.6) !important;
+        border: 1px solid rgba(0, 212, 255, 0.2) !important;
         border-radius: 12px;
-        font-size: 0.8rem;
+        padding: 12px !important;
+        backdrop-filter: blur(8px);
+    }
+    [data-testid="stMetricValue"] {
+        color: #00d4ff !important;
+        font-weight: 700 !important;
+        text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+    [data-testid="stMetricLabel"] {
+        color: #c0c0ff !important;
+    }
+
+    /* ─── Alerts ─── */
+    .stSuccess {
+        background: rgba(0, 200, 100, 0.15) !important;
+        border: 1px solid rgba(0, 255, 128, 0.3) !important;
+        color: #00ff80 !important;
+        border-radius: 12px;
+    }
+    .stError {
+        background: rgba(255, 50, 80, 0.15) !important;
+        border: 1px solid rgba(255, 80, 100, 0.3) !important;
+        color: #ff6b6b !important;
+        border-radius: 12px;
+    }
+    .stWarning {
+        background: rgba(255, 200, 0, 0.1) !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        color: #ffd700 !important;
+        border-radius: 12px;
+    }
+    .stInfo {
+        background: rgba(0, 150, 255, 0.1) !important;
+        border: 1px solid rgba(0, 180, 255, 0.3) !important;
+        color: #00b4ff !important;
+        border-radius: 12px;
+    }
+
+    /* ─── Progress Bar ─── */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #7b2ff7, #00d4ff, #ff6ec7) !important;
+        border-radius: 8px;
+    }
+
+    /* ─── Data Editor / Dataframes ─── */
+    [data-testid="stDataFrame"], .stDataFrame {
+        border: 1px solid rgba(138, 43, 226, 0.3) !important;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* ─── Divider ─── */
+    hr {
+        border-color: rgba(138, 43, 226, 0.3) !important;
+        margin: 1.5rem 0 !important;
+    }
+
+    /* ─── Select Slider ─── */
+    .stSlider > div {
+        color: #c0c0ff !important;
+    }
+
+    /* ─── Caption text ─── */
+    .stCaption, small {
+        color: #9090cc !important;
+    }
+
+    /* ─── Status widget ─── */
+    [data-testid="stStatusWidget"] {
+        background: rgba(20, 10, 50, 0.7) !important;
+        border: 1px solid rgba(138, 43, 226, 0.3) !important;
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+    }
+
+    /* ─── Popover ─── */
+    [data-testid="stPopover"] {
+        background: rgba(20, 10, 50, 0.95) !important;
+        border: 1px solid rgba(138, 43, 226, 0.3) !important;
+        border-radius: 12px;
+        backdrop-filter: blur(15px);
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(10, 5, 30, 0.5); }
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #7b2ff7, #00d4ff);
+        border-radius: 4px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -461,16 +717,10 @@ with tab_add_video:
             video_id = video_id_match.group(1)
             
             try:
-                # Fetch transcript
-                t_list = YouTubeTranscriptApi.list_transcripts(video_id)
-                transcript = None
-                try:
-                    transcript = t_list.find_transcript(['hi', 'en', 'en-IN'])
-                except:
-                    transcript = t_list.find_generated_transcript(['en'])
-                
-                parts = transcript.fetch()
-                full_text = TextFormatter().format_transcript(parts)
+                # Fetch transcript (v1.x API)
+                ytt_api = YouTubeTranscriptApi()
+                transcript_data = ytt_api.fetch(video_id)
+                full_text = " ".join([snippet.text for snippet in transcript_data])
                 st.write(f"Fetched {len(full_text)} chars.")
                 
                 # Extract jokes (simplified for Streamlit)
