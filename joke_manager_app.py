@@ -16,6 +16,7 @@ from openai import OpenAI
 from supabase import create_client
 from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.formatters import TextFormatter
 
 # ─── Config & Setup ──────────────────────────────────────────────────────────
 
@@ -644,13 +645,33 @@ def _parse_vtt(vtt_text):
 
 
 def fetch_transcript_with_fallback(video_id):
-    """Fetch YouTube transcript. Tries youtube-transcript-api first, falls back to yt-dlp."""
-    # Method 1: youtube-transcript-api (fast, but IP-blocked on cloud)
+    """Fetch YouTube transcript. Tries youtube-transcript-api first (with smart language selection), falls back to yt-dlp."""
+    primary_err = None
+    # Method 1: youtube-transcript-api with smart language listing (like Flask app)
     try:
         ytt_api = YouTubeTranscriptApi()
-        transcript_data = ytt_api.fetch(video_id)
-        return ' '.join([snippet.text for snippet in transcript_data])
-    except Exception as primary_err:
+        # Try listing available transcripts and finding the best language
+        try:
+            transcript_list = ytt_api.list(video_id)
+            transcript = None
+            for lang_code in ['hi', 'en', 'en-IN']:
+                try:
+                    transcript = transcript_list.find_transcript([lang_code])
+                    break
+                except:
+                    continue
+            if not transcript:
+                transcript = list(transcript_list)[0]
+            
+            transcript_data = transcript.fetch()
+            formatter = TextFormatter()
+            return formatter.format_transcript(transcript_data)
+        except Exception:
+            # Fallback to simple fetch if list fails
+            transcript_data = ytt_api.fetch(video_id)
+            return ' '.join([snippet.text for snippet in transcript_data])
+    except Exception as e:
+        primary_err = e
         st.warning(f"⚠️ Primary transcript API failed (likely IP block). Trying fallback...")
     
     # Method 2: yt-dlp subtitle download (works from cloud IPs)
@@ -690,6 +711,36 @@ def fetch_transcript_with_fallback(video_id):
         raise Exception("yt-dlp timed out after 60 seconds.")
     except Exception as fallback_err:
         raise Exception(f"Both transcript methods failed.\nPrimary: {primary_err}\nFallback: {fallback_err}")
+
+
+def get_prompt_for_language(language):
+    """Return appropriate extraction prompt based on language."""
+    if language in ['hindi', 'hinglish']:
+        return """You are an expert Comedy Curator and Translator.
+Extract "Standout Comedy Segments" from this Hindi/Hinglish transcript.
+
+RULES:
+1. NO SUMMARIES - TRANSLATE the actual funny monologue
+2. Include 2-3 sentences of context (setup + punchline together)
+3. Translation: "चीप" → "Cheap", keep it conversational
+4. Ignore filler like "Thank you", [Music]
+5. Preserve the exact comedy
+
+OUTPUT JSON:
+{"segments": [{"segment_id": 1, "original_text": "Hindi text", "searchable_content": "Full English/Hinglish translation", "keywords": ["tag1", "tag2"]}]}"""
+    else:
+        return """You are an expert Comedy Curator.
+Extract "Standout Comedy Segments" from this English transcript.
+
+RULES:
+1. NO SUMMARIES - capture actual funny monologue
+2. Include 2-3 sentences of context (setup + punchline together)  
+3. Clean up [Applause], fix broken sentences
+4. Ignore filler like "Thank you", [Music]
+5. Preserve the exact comedy
+
+OUTPUT JSON:
+{"segments": [{"segment_id": 1, "original_text": "Exact text", "searchable_content": "Cleaned full segment", "keywords": ["tag1", "tag2"]}]}"""
 
 # ─── V12 Generation ──────────────────────────────────────────────────────────
 
@@ -989,9 +1040,9 @@ with tab_add_video:
                 full_text = fetch_transcript_with_fallback(vid)
                 st.write(f"✅ Fetched {len(full_text)} chars.")
                 
-                # Chunk with overlap for better extraction
+                # Chunk with overlap for better extraction (matches Flask app: 2000 char overlap)
                 chunk_size = 6000
-                overlap = 1500
+                overlap = 2000
                 chunks = []
                 pos = 0
                 while pos < len(full_text):
@@ -1001,19 +1052,19 @@ with tab_add_video:
                 
                 all_jokes = []
                 bar = st.progress(0)
+                
+                # Use language-specific prompt (smart Hindi/Hinglish handling)
+                extraction_prompt = get_prompt_for_language(lang)
+                
                 for i, chunk in enumerate(chunks):
                     status.update(label=f"Extracting jokes from chunk {i+1}/{len(chunks)}...")
-                    
-                    sys_prompt = """You are a Comedy Curator. Extract ALL standout comedy segments from this transcript.
-Return JSON: {"segments": [{"searchable_content": "the joke text cleaned up for readability", "keywords": ["tag1", "tag2"]}]}
-IMPORTANT: Extract EVERY joke, don't skip any. Clean up the text for readability but keep the joke intact."""
                     
                     try:
                         resp = openai_client.chat.completions.create(
                             model="gpt-4o",
                             messages=[
-                                {"role": "system", "content": sys_prompt},
-                                {"role": "user", "content": f"Extract ALL jokes:\n{chunk}"}
+                                {"role": "system", "content": "Comedy curator. Output valid JSON only. Extract ALL comedy segments, don't skip any."},
+                                {"role": "user", "content": f"{extraction_prompt}\n\nIMPORTANT: Extract ALL comedy segments from this transcript section. Do not skip any jokes.\n\nTRANSCRIPT:\n{chunk}"}
                             ],
                             response_format={"type": "json_object"},
                             temperature=0.4
