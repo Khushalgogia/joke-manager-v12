@@ -7,6 +7,9 @@ import os
 import re
 import json
 import time
+import subprocess
+import tempfile
+import glob
 import pandas as pd
 import streamlit as st
 from openai import OpenAI
@@ -320,6 +323,161 @@ st.markdown("""
         background: linear-gradient(180deg, #7b2ff7, #00d4ff);
         border-radius: 4px;
     }
+
+    /* ─── Global Text Color Override ─── */
+    .stApp, .stApp * {
+        color: #e8e8ff;
+    }
+    .stApp a { color: #00d4ff; }
+
+    /* ─── Selectbox / Dropdown Menus (baseweb) ─── */
+    div[data-baseweb="select"] > div {
+        background: rgba(20, 10, 50, 0.7) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(138, 43, 226, 0.4) !important;
+        border-radius: 10px !important;
+    }
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div {
+        color: #ffffff !important;
+    }
+    /* Dropdown option list */
+    div[data-baseweb="popover"] ul,
+    div[data-baseweb="popover"] li,
+    div[data-baseweb="menu"] {
+        background: rgba(15, 8, 40, 0.98) !important;
+        color: #e8e8ff !important;
+    }
+    div[data-baseweb="popover"] li:hover {
+        background: rgba(123, 47, 247, 0.3) !important;
+    }
+    /* Selectbox selected value */
+    [data-baseweb="select"] [data-testid="stMarkdownContainer"],
+    [data-baseweb="select"] input {
+        color: #ffffff !important;
+    }
+
+    /* ─── Number Input ─── */
+    .stNumberInput > div > div > input {
+        background: rgba(20, 10, 50, 0.7) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(138, 43, 226, 0.4) !important;
+        border-radius: 10px !important;
+    }
+    .stNumberInput button {
+        color: #e8e8ff !important;
+        border-color: rgba(138, 43, 226, 0.4) !important;
+        background: rgba(20, 10, 50, 0.5) !important;
+    }
+    .stNumberInput label {
+        color: #e8e8ff !important;
+    }
+
+    /* ─── All Labels ─── */
+    .stTextInput label, .stTextArea label, .stSelectbox label,
+    .stMultiSelect label, .stNumberInput label, .stRadio label,
+    .stSlider label, .stColorPicker label, .stDateInput label,
+    .stTimeInput label, .stFileUploader label {
+        color: #e8e8ff !important;
+    }
+
+    /* ─── Form Submit Button ─── */
+    .stFormSubmitButton > button {
+        width: 100%;
+        border-radius: 12px !important;
+        height: 3em;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #7b2ff7 0%, #c41cff 50%, #ff6ec7 100%) !important;
+        border: none !important;
+        box-shadow: 0 0 15px rgba(196, 28, 255, 0.3), 0 4px 15px rgba(0,0,0,0.2) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* ─── Status Widget (st.status) ─── */
+    details[data-testid="stExpander"],
+    div[data-testid="stStatusWidget"] {
+        background: rgba(20, 10, 50, 0.7) !important;
+        border: 1px solid rgba(138, 43, 226, 0.3) !important;
+        border-radius: 12px !important;
+        color: #e8e8ff !important;
+    }
+    details[data-testid="stExpander"] summary span,
+    details[data-testid="stExpander"] p,
+    details[data-testid="stExpander"] span,
+    details[data-testid="stExpander"] li,
+    details[data-testid="stExpander"] div {
+        color: #e8e8ff !important;
+    }
+
+    /* ─── Expander header arrow/icon ─── */
+    details[data-testid="stExpander"] svg {
+        fill: #e8e8ff !important;
+        color: #e8e8ff !important;
+    }
+
+    /* ─── Radio Buttons ─── */
+    .stRadio > div > label {
+        color: #e8e8ff !important;
+    }
+    .stRadio > div > label > div:first-child {
+        background-color: rgba(20, 10, 50, 0.7) !important;
+        border-color: rgba(138, 43, 226, 0.4) !important;
+    }
+
+    /* ─── Multiselect ─── */
+    .stMultiSelect > div > div {
+        background: rgba(20, 10, 50, 0.7) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(138, 43, 226, 0.4) !important;
+        border-radius: 10px !important;
+    }
+    .stMultiSelect span[data-baseweb="tag"] {
+        background: rgba(123, 47, 247, 0.3) !important;
+        color: #ffffff !important;
+    }
+
+    /* ─── Toast / Notification ─── */
+    [data-testid="stToast"] {
+        background: rgba(15, 8, 40, 0.95) !important;
+        color: #e8e8ff !important;
+        border: 1px solid rgba(138, 43, 226, 0.3) !important;
+    }
+
+    /* ─── Markdown text (st.write, st.markdown) ─── */
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] span,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stMarkdownContainer"] code,
+    [data-testid="stMarkdownContainer"] strong {
+        color: #e8e8ff !important;
+    }
+    [data-testid="stMarkdownContainer"] code {
+        background: rgba(123, 47, 247, 0.2) !important;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* ─── Select Slider labels ─── */
+    .stSlider [data-testid="stTickBarMin"],
+    .stSlider [data-testid="stTickBarMax"] {
+        color: #c0c0ff !important;
+    }
+
+    /* ─── Generic fallback: any remaining white text ─── */
+    .main .block-container {
+        color: #e8e8ff !important;
+    }
+    .main .block-container p,
+    .main .block-container span,
+    .main .block-container div,
+    .main .block-container label,
+    .main .block-container li {
+        color: #e8e8ff !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -462,6 +620,76 @@ def enrich_joke(joke_text):
         if embed:
             result['bridge_embedding'] = embed
     return result
+
+
+def _parse_vtt(vtt_text):
+    """Parse VTT subtitle text into plain transcript."""
+    lines = vtt_text.split('\n')
+    text_lines = []
+    for line in lines:
+        line = line.strip()
+        # Skip headers, timestamps, and empty lines
+        if not line or line.startswith('WEBVTT') or line.startswith('Kind:') or line.startswith('Language:'):
+            continue
+        if '-->' in line:  # timestamp line
+            continue
+        if re.match(r'^\d+$', line):  # cue number
+            continue
+        # Remove VTT tags like <c>, </c>, <00:00:01.000>
+        clean = re.sub(r'<[^>]+>', '', line)
+        clean = clean.strip()
+        if clean and clean not in text_lines[-1:]:  # avoid consecutive duplicates
+            text_lines.append(clean)
+    return ' '.join(text_lines)
+
+
+def fetch_transcript_with_fallback(video_id):
+    """Fetch YouTube transcript. Tries youtube-transcript-api first, falls back to yt-dlp."""
+    # Method 1: youtube-transcript-api (fast, but IP-blocked on cloud)
+    try:
+        ytt_api = YouTubeTranscriptApi()
+        transcript_data = ytt_api.fetch(video_id)
+        return ' '.join([snippet.text for snippet in transcript_data])
+    except Exception as primary_err:
+        st.warning(f"⚠️ Primary transcript API failed (likely IP block). Trying fallback...")
+    
+    # Method 2: yt-dlp subtitle download (works from cloud IPs)
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            cmd = [
+                'yt-dlp',
+                '--write-auto-sub',
+                '--write-sub',
+                '--sub-lang', 'en,hi,en-IN',
+                '--sub-format', 'vtt',
+                '--skip-download',
+                '--no-warnings',
+                '-o', os.path.join(tmp_dir, '%(id)s.%(ext)s'),
+                f'https://www.youtube.com/watch?v={video_id}'
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            
+            # Find the downloaded subtitle file
+            vtt_files = glob.glob(os.path.join(tmp_dir, '*.vtt'))
+            if not vtt_files:
+                raise Exception(f"yt-dlp found no subtitles. stderr: {result.stderr[:300]}")
+            
+            # Read and parse the VTT file
+            with open(vtt_files[0], 'r', encoding='utf-8') as f:
+                vtt_content = f.read()
+            
+            transcript_text = _parse_vtt(vtt_content)
+            if not transcript_text.strip():
+                raise Exception("Parsed transcript is empty")
+            
+            st.success("✅ Fallback (yt-dlp) succeeded!")
+            return transcript_text
+    except FileNotFoundError:
+        raise Exception("Both transcript methods failed. yt-dlp is not installed.")
+    except subprocess.TimeoutExpired:
+        raise Exception("yt-dlp timed out after 60 seconds.")
+    except Exception as fallback_err:
+        raise Exception(f"Both transcript methods failed.\nPrimary: {primary_err}\nFallback: {fallback_err}")
 
 # ─── V12 Generation ──────────────────────────────────────────────────────────
 
@@ -756,11 +984,9 @@ with tab_add_video:
             vid = video_id_match.group(1)
             
             try:
-                # Fetch transcript (v1.x API)
+                # Fetch transcript (with yt-dlp fallback)
                 st.write("📡 Fetching transcript...")
-                ytt_api = YouTubeTranscriptApi()
-                transcript_data = ytt_api.fetch(vid)
-                full_text = " ".join([snippet.text for snippet in transcript_data])
+                full_text = fetch_transcript_with_fallback(vid)
                 st.write(f"✅ Fetched {len(full_text)} chars.")
                 
                 # Chunk with overlap for better extraction
