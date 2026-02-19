@@ -719,15 +719,18 @@ def get_prompt_for_language(language):
         return """You are an expert Comedy Curator and Translator.
 Extract "Standout Comedy Segments" from this Hindi/Hinglish transcript.
 
-RULES:
-1. NO SUMMARIES - TRANSLATE the actual funny monologue
-2. Include 2-3 sentences of context (setup + punchline together)
-3. Translation: "चीप" → "Cheap", keep it conversational
-4. Ignore filler like "Thank you", [Music]
-5. Preserve the exact comedy
+CRITICAL RULES:
+1. The "searchable_content" field MUST be written in ENGLISH ONLY. No Hindi/Devanagari script.
+2. TRANSLATE every joke fully into natural, conversational English. Example: "चीप" → "Cheap", "पैसा" → "Money"
+3. If the comedian mixes Hindi and English (Hinglish), translate the Hindi parts to English while keeping the English parts as-is
+4. NO SUMMARIES - translate the actual funny monologue word-for-word into English
+5. Include 2-3 sentences of context (setup + punchline together)
+6. The "original_text" field should have the original Hindi/Hinglish text as spoken
+7. Ignore filler like "Thank you", [Music], [Applause]
+8. Preserve the exact comedy and timing in your English translation
 
 OUTPUT JSON:
-{"segments": [{"segment_id": 1, "original_text": "Hindi text", "searchable_content": "Full English/Hinglish translation", "keywords": ["tag1", "tag2"]}]}"""
+{"segments": [{"segment_id": 1, "original_text": "Original Hindi/Hinglish text", "searchable_content": "FULL ENGLISH TRANSLATION of the joke - must be readable standalone in English", "keywords": ["tag1", "tag2"]}]}"""
     else:
         return """You are an expert Comedy Curator.
 Extract "Standout Comedy Segments" from this English transcript.
