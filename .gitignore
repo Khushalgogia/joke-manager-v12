@@ -6,6 +6,7 @@ config/open_ai_api.txt
 open_ai_api.txt
 credentials
 geminiapi_key.env
+groq.env
 
 # Streamlit
 .streamlit/

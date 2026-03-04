@@ -505,28 +505,56 @@ st.markdown(_bubbles_html, unsafe_allow_html=True)
 
 # Load secrets (Streamlit Cloud or local .env)
 # Try loading local .env if secrets not found
+_config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+_app_dir = os.path.dirname(os.path.abspath(__file__))
 try:
-    load_dotenv()
+    load_dotenv(os.path.join(_config_dir, "credentials.env"))
+    load_dotenv(os.path.join(_app_dir, "groq.env"))
 except:
     pass
 
+# Load OpenAI key from config file if not already in environment
+_openai_key_file = os.path.join(_config_dir, "open_ai_api.txt")
+if os.path.exists(_openai_key_file) and not os.getenv("OPENAI_API_KEY"):
+    with open(_openai_key_file, "r") as _f:
+        _key = _f.read().strip()
+        if _key:
+            os.environ["OPENAI_API_KEY"] = _key
+
+# Load Gemini key from plain text file if not already in environment
+_gemini_key_file = os.path.join(_app_dir, "..", "geminiapi_key.env")
+if os.path.exists(_gemini_key_file) and not os.getenv("GEMINI_API_KEY"):
+    with open(_gemini_key_file, "r") as _f:
+        _key = _f.read().strip()
+        if _key:
+            os.environ["GEMINI_API_KEY"] = _key
+
+
+def _get_secret(key):
+    """Safely read from st.secrets (Streamlit Cloud), returns None if unavailable."""
+    try:
+        return st.secrets[key]
+    except Exception:
+        return None
+
+
 def get_openai_client():
-    api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+    api_key = _get_secret("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
     if not api_key:
         st.error("❌ OPENAI_API_KEY not found in secrets or environment.")
         st.stop()
     return OpenAI(api_key=api_key)
 
 def get_supabase_client():
-    url = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
-    key = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
+    url = _get_secret("SUPABASE_URL") or os.getenv("SUPABASE_URL")
+    key = _get_secret("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
     if not url or not key:
         st.error("❌ SUPABASE_URL/KEY not found in secrets or environment.")
         st.stop()
     return create_client(url, key)
 
 def get_gemini_client():
-    api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    api_key = _get_secret("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not api_key:
         st.warning("⚠️ GEMINI_API_KEY not found. V12 generation disabled.")
         return None
@@ -540,6 +568,19 @@ def get_gemini_client():
 openai_client = get_openai_client()
 supabase = get_supabase_client()
 gemini_client = get_gemini_client()
+
+# Groq client for Whisper transcription
+def get_groq_client():
+    api_key = _get_secret("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        from groq import Groq
+        return Groq(api_key=api_key)
+    except Exception:
+        return None
+
+groq_client = get_groq_client()
 
 
 # ─── Helper Functions ────────────────────────────────────────────────────────
@@ -706,31 +747,131 @@ def fetch_transcript_with_fallback(video_id):
             st.success("✅ Fallback (yt-dlp) succeeded!")
             return transcript_text
     except FileNotFoundError:
-        raise Exception("Both transcript methods failed. yt-dlp is not installed.")
+        subtitle_err = "yt-dlp is not installed."
     except subprocess.TimeoutExpired:
-        raise Exception("yt-dlp timed out after 60 seconds.")
+        subtitle_err = "yt-dlp timed out after 60 seconds."
     except Exception as fallback_err:
-        raise Exception(f"Both transcript methods failed.\nPrimary: {primary_err}\nFallback: {fallback_err}")
+        subtitle_err = str(fallback_err)
+    
+    # Method 3: Groq Whisper — download audio and transcribe
+    if not groq_client:
+        raise Exception(
+            f"All transcript methods failed and Groq Whisper is not configured.\n"
+            f"Primary: {primary_err}\nSubtitle fallback: {subtitle_err}"
+        )
+    
+    st.warning("📢 No subtitles available. Transcribing audio with Groq Whisper...")
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            audio_path = os.path.join(tmp_dir, f"{video_id}.mp3")
+            cmd = [
+                'yt-dlp',
+                '-x', '--audio-format', 'mp3',
+                '--audio-quality', '5',  # medium quality, smaller file
+                '-o', audio_path,
+                f'https://www.youtube.com/watch?v={video_id}'
+            ]
+            dl_result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            
+            if not os.path.exists(audio_path):
+                # yt-dlp may add extra extension
+                mp3_files = glob.glob(os.path.join(tmp_dir, '*.mp3'))
+                if mp3_files:
+                    audio_path = mp3_files[0]
+                else:
+                    raise Exception(f"Audio download failed. stderr: {dl_result.stderr[:300]}")
+            
+            file_size = os.path.getsize(audio_path)
+            st.write(f"🎵 Audio downloaded: {file_size / (1024*1024):.1f} MB")
+            
+            # Groq Whisper has a 25MB limit — split if needed
+            if file_size <= 25 * 1024 * 1024:
+                # Single file, transcribe directly
+                with open(audio_path, 'rb') as af:
+                    transcription = groq_client.audio.transcriptions.create(
+                        file=(os.path.basename(audio_path), af.read()),
+                        model="whisper-large-v3",
+                        response_format="text",
+                    )
+                transcript_text = transcription.strip() if isinstance(transcription, str) else transcription.text.strip()
+            else:
+                # Split into ~10 min chunks using yt-dlp
+                st.write("📎 Large file — splitting into chunks...")
+                chunk_duration = 600  # 10 minutes in seconds
+                chunk_paths = []
+                chunk_idx = 0
+                
+                # Get duration
+                dur_cmd = ['yt-dlp', '--print', 'duration', '--no-download',
+                           f'https://www.youtube.com/watch?v={video_id}']
+                dur_result = subprocess.run(dur_cmd, capture_output=True, text=True, timeout=30)
+                try:
+                    total_duration = int(float(dur_result.stdout.strip()))
+                except:
+                    total_duration = 7200  # assume 2 hours max
+                
+                # Use ffmpeg to split the downloaded audio
+                import math
+                num_chunks = math.ceil(total_duration / chunk_duration)
+                for i in range(num_chunks):
+                    start_sec = i * chunk_duration
+                    chunk_path = os.path.join(tmp_dir, f"chunk_{i}.mp3")
+                    ffmpeg_cmd = [
+                        'ffmpeg', '-y', '-i', audio_path,
+                        '-ss', str(start_sec), '-t', str(chunk_duration),
+                        '-acodec', 'libmp3lame', '-ab', '64k',
+                        chunk_path
+                    ]
+                    subprocess.run(ffmpeg_cmd, capture_output=True, timeout=60)
+                    if os.path.exists(chunk_path) and os.path.getsize(chunk_path) > 0:
+                        chunk_paths.append(chunk_path)
+                
+                st.write(f"📦 Split into {len(chunk_paths)} audio chunks")
+                
+                # Transcribe each chunk
+                all_text = []
+                for i, cp in enumerate(chunk_paths):
+                    st.write(f"🎤 Transcribing chunk {i+1}/{len(chunk_paths)}...")
+                    with open(cp, 'rb') as af:
+                        transcription = groq_client.audio.transcriptions.create(
+                            file=(os.path.basename(cp), af.read()),
+                            model="whisper-large-v3",
+                            response_format="text",
+                        )
+                    chunk_text = transcription.strip() if isinstance(transcription, str) else transcription.text.strip()
+                    if chunk_text:
+                        all_text.append(chunk_text)
+                
+                transcript_text = ' '.join(all_text)
+            
+            if not transcript_text.strip():
+                raise Exception("Whisper returned empty transcript")
+            
+            st.success(f"✅ Whisper transcription complete! ({len(transcript_text)} chars)")
+            return transcript_text
+    except Exception as whisper_err:
+        raise Exception(
+            f"All transcript methods failed.\n"
+            f"Primary: {primary_err}\nSubtitle fallback: {subtitle_err}\n"
+            f"Whisper: {whisper_err}"
+        )
 
 
 def get_prompt_for_language(language):
-    """Return appropriate extraction prompt based on language."""
+    """Return appropriate prompt based on language."""
     if language in ['hindi', 'hinglish']:
         return """You are an expert Comedy Curator and Translator.
 Extract "Standout Comedy Segments" from this Hindi/Hinglish transcript.
 
-CRITICAL RULES:
-1. The "searchable_content" field MUST be written in ENGLISH ONLY. No Hindi/Devanagari script.
-2. TRANSLATE every joke fully into natural, conversational English. Example: "चीप" → "Cheap", "पैसा" → "Money"
-3. If the comedian mixes Hindi and English (Hinglish), translate the Hindi parts to English while keeping the English parts as-is
-4. NO SUMMARIES - translate the actual funny monologue word-for-word into English
-5. Include 2-3 sentences of context (setup + punchline together)
-6. The "original_text" field should have the original Hindi/Hinglish text as spoken
-7. Ignore filler like "Thank you", [Music], [Applause]
-8. Preserve the exact comedy and timing in your English translation
+RULES:
+1. NO SUMMARIES - TRANSLATE the actual funny monologue
+2. Include 2-3 sentences of context (setup + punchline together)
+3. Translation: "चीप" → "Cheap", keep it conversational
+4. Ignore filler like "Thank you", [Music]
+5. Preserve the exact comedy
 
 OUTPUT JSON:
-{"segments": [{"segment_id": 1, "original_text": "Original Hindi/Hinglish text", "searchable_content": "FULL ENGLISH TRANSLATION of the joke - must be readable standalone in English", "keywords": ["tag1", "tag2"]}]}"""
+{"segments": [{"segment_id": 1, "original_text": "Hindi text", "searchable_content": "Full English/Hinglish translation", "keywords": ["tag1", "tag2"]}]}"""
     else:
         return """You are an expert Comedy Curator.
 Extract "Standout Comedy Segments" from this English transcript.

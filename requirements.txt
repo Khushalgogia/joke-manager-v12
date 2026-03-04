@@ -7,3 +7,4 @@ youtube-transcript-api>=1.0.0
 yt-dlp>=2024.1.0
 pandas>=2.0.0
 plotly>=5.18.0
+groq>=0.4.0
